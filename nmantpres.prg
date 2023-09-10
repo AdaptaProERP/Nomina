@@ -13,7 +13,7 @@ PROCE MAIN(cCodTra)
    LOCAL cPagos:=oDp:cConAdel
    LOCAL oTable,oTrabaj
    
-   DEFAULT cCodTra:="1002"
+   DEFAULT cCodTra:=SQLGET("NMRECIBOS","REC_CODTRA")
 
    CursorWait()
 
@@ -61,13 +61,18 @@ FUNCTION ViewData(aData,cCodTra,cApellido,cNombre)
    LOCAL cSql,oTable,cTipo:="Pago de Intereses : "+oDp:cConInter
    LOCAL oFont,oFontB
    LOCAL nDias:=0,nInteres:=0,nMontoAnt:=0
+   LOCAL aCoors:=GetCoors( GetDesktopWindow() )
 
    cApellido:=ALLTRIM(cApellido)+","+ALLTRIM(cNombre)
 
-   DEFINE FONT oFont  NAME "Arial"   SIZE 0, -12 
-   DEFINE FONT oFontB NAME "Arial"   SIZE 0, -12 BOLD
+   DEFINE FONT oFont  NAME "Tahoma"   SIZE 0, -12 
+   DEFINE FONT oFontB NAME "Tahoma"   SIZE 0, -12 BOLD
 
-   oAntPres:=DPEDIT():New("Pagos sobre Antiguedad Laboral ","NMANTPRES.edt","oAntPres",.T.)
+//   oAntPres:=DPEDIT():New("Pagos sobre Antiguedad Laboral ","NMANTPRES.edt","oAntPres",.T.)
+
+   DpMdi("Pagos sobre Antiguedad Laboral ","oAntPres","NMANTPRES.edt")
+
+   oAntPres:Windows(0,0,aCoors[3]-160,MIN(620,aCoors[4]-10),.T.) // Maximizado
 
    oAntPres:oBrw:=TXBrowse():New( oAntPres:oDlg )
    oAntPres:oBrw:SetArray( aData, .F. )
@@ -77,6 +82,16 @@ FUNCTION ViewData(aData,cCodTra,cApellido,cNombre)
    oAntPres:cCodTra  :=cCodTra
    oAntPres:cTrabajad:=" "+ALLTRIM(cCodTra)+" "+cApellido
    oAntPres:cConcepto:=" Concepto: ["+oDp:cConAdel+"]"
+
+
+   oAntPres:nClrPane1:=16775408
+   oAntPres:nClrPane2:=16771797
+
+   oAntPres:nClrText :=0
+   oAntPres:nClrText1:=CLR_HBLUE
+   oAntPres:nClrText2:=4887808
+   oAntPres:nClrText3:=0
+
 
    AEVAL(oAntPres:oBrw:aCols,{|oCol|oCol:oHeaderFont:=oFontB})
 
@@ -108,15 +123,21 @@ FUNCTION ViewData(aData,cCodTra,cApellido,cNombre)
 
    oAntPres:oBrw:bClrStd := {|oBrw,nClrText,aData|oBrw:=oAntPres:oBrw,aData:=oBrw:aArrayData[oBrw:nArrayAt],;
                              nClrText:=0,;
-                             {nClrText,iif( oBrw:nArrayAt%2=0, 15790320, 16382457) } }
+                             {nClrText,iif( oBrw:nArrayAt%2=0, oAntPres:nClrPane1, oAntPres:nClrPane2) } }
 
    oAntPres:oBrw:bLDblClick:={|oBrw|oBrw:=oAntPres:oBrw,;
                                EJECUTAR("NMRECVIEW",oBrw:aArrayData[oBrw:nArrayAt,2])}
 
-   oAntPres:oBrw:bClrHeader:= {|| {0,14671839 }}
-   oAntPres:oBrw:bClrFooter:= {|| {0,14671839 }}
+//   oAntPres:oBrw:bClrHeader:= {|| {0,14671839 }}
+//   oAntPres:oBrw:bClrFooter:= {|| {0,14671839 }
+
+   oAntPres:oBrw:bClrHeader:= {|| { oDp:nLbxClrHeaderText, oDp:nLbxClrHeaderPane}}
+   oAntPres:oBrw:bClrFooter:= {|| { oDp:nLbxClrHeaderText, oDp:nLbxClrHeaderPane}}
 
    oAntPres:oBrw:CreateFromCode()
+
+   oAntPres:oWnd:oClient := oAntPres:oBrw
+
 
    oAntPres:Activate({||oAntPres:ViewDatBar(oAntPres)})
 
@@ -126,7 +147,7 @@ RETURN .T.
 // Barra de Botones
 */
 FUNCTION ViewDatBar(oAntPres)
-   LOCAL oCursor,oBar,oBtn,oFont,oCol,nDif
+   LOCAL oCursor,oBar,oBtn,oFont,oFontB,oCol,nDif
    LOCAL nWidth :=0 // Ancho Calculado seg£n Columnas
    LOCAL nHeight:=0 // Alto
    LOCAL nLines :=0 // Lineas
@@ -134,6 +155,10 @@ FUNCTION ViewDatBar(oAntPres)
 
    DEFINE CURSOR oCursor HAND
    DEFINE BUTTONBAR oBar SIZE 52-15,60-15 OF oDlg 3D CURSOR oCursor
+
+   DEFINE FONT oFont  NAME "Tahoma"   SIZE 0, -12 
+   DEFINE FONT oFontB NAME "Tahoma"   SIZE 0, -12 BOLD
+
 
    DEFINE BUTTON oBtn;
           OF oBar;
@@ -180,13 +205,15 @@ FUNCTION ViewDatBar(oAntPres)
           FILENAME "BITMAPS\XSALIR.BMP";
           ACTION oAntPres:Close()
 
-  oAntPres:oBrw:SetColor(0,16382457 )
+  oAntPres:oBrw:SetColor(0,oAntPres:nClrPane1 )
 
-  @ 0.1,40 SAY oAntPres:cTrabajad OF oBar BORDER SIZE 345,18
-  @ 1.4,40 SAY oAntPres:cConcepto OF oBar BORDER SIZE 345,18
+  oBar:SetColor(CLR_BLACK,oDp:nGris)
+  AEVAL(oBar:aControls,{|o,n|o:SetColor(CLR_BLACK,oDp:nGris)})
 
-  oBar:SetColor(CLR_BLACK,15724527)
-  AEVAL(oBar:aControls,{|o,n|o:SetColor(CLR_BLACK,15724527)})
+  @ 0.1,40 SAY oAntPres:cTrabajad OF oBar BORDER SIZE 345,18 COLOR oDp:nClrYellowText,oDp:nClrYellow FONT oFontB
+  @ 1.4,40 SAY oAntPres:cConcepto OF oBar BORDER SIZE 345,18 COLOR oDp:nClrYellowText,oDp:nClrYellow FONT oFontB
+
+  
 
 RETURN .T.
 

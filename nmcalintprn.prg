@@ -9,26 +9,26 @@
 #INCLUDE "DPXBASE.CH"
 
 PROCE MAIN(cSql)
-   LOCAL aData:={},dDesde,nInteres:=0,I,lCursor:=.T.
-   LOCAL cCodTra,oCursor,cSqlTra,cWhere,cSelect,aSelect
-   LOCAL aCodigo:={},oTable
+  LOCAL aData:={},dDesde,nInteres:=0,I,lCursor:=.T.
+  LOCAL cCodTra,oCursor,cSqlTra,cWhere,cSelect,aSelect
+  LOCAL aCodigo:={},oTable
    
-   DEFAULT cCodTra:="1003"
+  DEFAULT cCodTra:="1003"
 
-   CursorWait()
+  CursorWait()
 
-   IF cSql=NIL
+  IF cSql=NIL
 
       cSql:="SELECT CODIGO,APELLIDO,NOMBRE,FECHA_ING,HIS_CODCON,HIS_DESDE,HIS_VARIAC,"+;
             "HIS_MONTO,HIS_NUMMEM,HIS_NUMOBS FROM NMHISTORICO "+;
             "INNER JOIN NMTRABAJADOR ON HIS_CODTRA=CODIGO "+;
             "WHERE CODIGO"+GetWhere(">=",cCodTra)+" AND CODIGO"+GetWhere("<=",cCodTra)
 
-   ENDIF
+  ENDIF
 
-   cWhere :=GetSqlWhere(cSql)
+  cWhere :=GetSqlWhere(cSql)
 
-   IF EMPTY(cWhere) 
+  IF EMPTY(cWhere) 
 
      cSqlTra:="SELECT HIS_CODTRA FROM NMHISTORICO WHERE HIS_CODCON"+GetWhere("=",oDp:cConPres)+;
               " OR HIS_CODCON"+GetWhere("=",oDp:cConAdel)
@@ -52,6 +52,7 @@ PROCE MAIN(cSql)
             " "+cWhere
 
    oCursor:=OpenTable(cSql,.F.) // Cursor para el Reporte
+
   
    oCursor:AppendBlank()
 
@@ -73,7 +74,10 @@ FUNCTION INTERESCAL(oDlg , oText , oMeter , lEnd , oCursor , cSqlTra)
 
    oText:SetText("Leyendo Trabajadores")
    oText:SetSize(300,17)
-   PUBLICO("oTrabajador","NIL")
+
+   IF TYPE("oTrabajador")="U"
+      PUBLICO("oTrabajador","NIL")
+   ENDIF
 
    cSqlTra:=ALLTRIM(cSqlTra)
                         
@@ -92,6 +96,8 @@ FUNCTION INTERESCAL(oDlg , oText , oMeter , lEnd , oCursor , cSqlTra)
          " GROUP BY REC_CODTRA "  
 
    oTrabajador:=OpenTable(cSql,.T.)
+// oTrabajador:Browse()
+
    cWhere:=GetWhereOr("CODIGO",oTrabajador:aDataFill)
    oTrabajador:End()
 
@@ -132,10 +138,15 @@ FUNCTION INTERESCAL(oDlg , oText , oMeter , lEnd , oCursor , cSqlTra)
       dDesde:=oTrabajador:FECHA_ING
       aData :={}
   
+//    nInteres:=EJECUTAR("INTERESES",NIL  ,oDp:cConPres,cPagos ,dDesde,oDp:dFecha,{},    ,        ,        ,     ,        ,       ,oDp:lIndexaInt,0,oDp:dFchIniInt)
 //    nInteres:=INTERES(NIL,oDp:cConPres,cPagos,dDesde,oDp:dFecha,@aData,,,,,,,oDp:lIndexaInt,0,oDp:dFchIniInt)
 
-      nInteres:=EJECUTAR("INTERESES",NIL,oDp:cConPres,cPagos,dDesde,oDp:dFecha,@aData,,,,,,,oDp:lIndexaInt,0,oDp:dFchIniInt)
+      nInteres:=EJECUTAR("INTERESES",NIL,oDp:cConPres,cPagos,dDesde,oDp:dFecha,{},,,,,,oTrabajador:CODIGO,oDp:lIndexaInt,0,oDp:dFchIniInt)
+//   INTERES(   cField,cDeuda      ,cAbonos,dDesde,dHasta    ,aVector,NEGATIVO,ANIODIAS,nTasa,_CFINMES,_CAPCOR,cCodTra,lIndexa,nBase,dFchIni,cConIni)
+
       aData    :=ACLONE(oDp:aIntereses)
+
+// ViewArray(aData)
 
       aData:= ASORT(aData,,, { |x, y| x[2] < y[2] })
 

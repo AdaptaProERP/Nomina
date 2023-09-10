@@ -11,8 +11,9 @@
 PROCE MAIN(cCodTra)
   LOCAL oDlg,oBrw,oFont,I,uValue,oFontB,oTable,oDlg,aData,cConcepto:="",oCol
   LOCAL cSql,cPictureV,cPictureM,cNombre:="",nVar:=0,nMonto:=0,cTitle:=""
+  LOCAL aTotal
 
-  DEFAULT cCodTra:="1002"
+  DEFAULT SQLGET("NMTRABAJADOR","CODIGO")
 
   cSql:="SELECT TAB_NUMERO,TAB_DESDE,TAB_HASTA,TAB_FCHREI,TAB_DIAS,TAB_DIAHAB,"+;
         "TAB_DIAFER,TAB_DIADES,TAB_NUMREC,TAB_PROCES FROM NMTABVAC "+;
@@ -20,6 +21,7 @@ PROCE MAIN(cCodTra)
 
   oTable:=OpenTable(cSql,.T.)
   aData :=ACLONE(oTable:aDataFill)
+  aTotal:=ATOTALES(aData)
 
   oTable:End()
 
@@ -32,10 +34,18 @@ PROCE MAIN(cCodTra)
   cNombre:=cCodTra+" "+ALLTRIM(oTable:APELLIDO)+" "+ALLTRIM(oTable:NOMBRE)
   oTable:End()
 
-  DEFINE FONT oFont  NAME "Arial"   SIZE 0, -12 
-  DEFINE FONT oFontB NAME "Arial"   SIZE 0, -12 BOLD
+  DEFINE FONT oFont  NAME "Tahoma"   SIZE 0, -12 
+  DEFINE FONT oFontB NAME "Tahoma"   SIZE 0, -12 BOLD
 
-  oTrabVac:=DPEDIT():New("Registro de Vacaciones"+cTitle,"NMTRABVAC.edt","oTrabVac",.T.)
+//  oTrabVac:=DPEDIT():New("Registro de Vacaciones"+cTitle,"NMTRABVAC.edt","oTrabVac",.T.)
+
+  DpMdi("Registro de Vacaciones"+cTitle,"oTrabVac","NMTRABVAC.edt")
+  oTrabVac:Windows(0,0,oDp:aCoors[3]-160,MIN(650+155,oDp:aCoors[4]-10),.T.) // Maximizado
+
+  oTrabVac:nClrPane1:=oDp:nClrPane1 // 15790320
+  oTrabVac:nClrPane2:=oDp:nClrPane2 // 16382457
+
+  oTrabVac:lMsgBar:=.F.
 
   oTrabVac:cCodTra  :=cCodTra
   oTrabVac:cTrabajad:=cNombre
@@ -43,7 +53,7 @@ PROCE MAIN(cCodTra)
 
   oDlg:=oTrabVac:oDlg
 
-  oBrw:=TXBrowse():New( oDlg )
+  oBrw:=TXBrowse():New( oTrabVac:oDlg )
 
   oBrw:nMarqueeStyle       := MARQSTYLE_HIGHLCELL
   oBrw:SetArray( aData, .F. )
@@ -54,7 +64,7 @@ PROCE MAIN(cCodTra)
 
   AEVAL(oBrw:aCols,{|oCol|oCol:oHeaderFont:=oFontB})
 
-  oBrw:CreateFromCode()
+  
 
   oBrw:aCols[1]:cHeader:="Número"+CRLF+"Reg."
   oBrw:aCols[1]:nWidth :=65
@@ -71,18 +81,26 @@ PROCE MAIN(cCodTra)
   oBrw:aCols[5]:cHeader:="Días"+CRLF+"Vac."
   oBrw:aCols[5]:nWidth :=60
   oBrw:aCols[5]:cEditPicture:="9999"
+  oBrw:aCols[5]:cFooter     :=FDP(aTotal[5],"9999")
 
   oBrw:aCols[6]:cHeader:="Días"+CRLF+"Hábiles"
   oBrw:aCols[6]:nWidth :=60
   oBrw:aCols[6]:cEditPicture:="9999"
+  oBrw:aCols[6]:cFooter     :=FDP(aTotal[6],"9999")
+  oBrw:aCols[6]:bStrData    :={|oBrw|oBrw:=oTrabVac:oBrw,TRAN(oBrw:aArrayData[oBrw:nArrayAt,6],"9999")}
+
 
   oBrw:aCols[7]:cHeader  :="Días"+CRLF+"Feriados"
   oBrw:aCols[7]:nWidth   :=60
   oBrw:aCols[7]:cEditPicture:="9999"
+  oBrw:aCols[7]:cFooter     :=FDP(aTotal[7],"9999")
+
 
   oBrw:aCols[8]:cHeader:="Días"+CRLF+"Descanso"
   oBrw:aCols[8]:nWidth :=65
   oBrw:aCols[8]:cEditPicture:="9999"
+  oBrw:aCols[8]:cFooter     :=FDP(aTotal[8],"9999")
+
 
   oBrw:aCols[9]:cHeader :="Número"+CRLF+"Recibo"
   oBrw:aCols[9]:nWidth  :=60
@@ -90,27 +108,39 @@ PROCE MAIN(cCodTra)
   oCol:=oBrw:aCols[10]
   oCol:cHeader      := "Procesado"
   oCol:nWidth       := 70
-  oCol:AddBmpFile("BITMAPS\xCheckOn.bmp")
-  oCol:AddBmpFile("BITMAPS\xCheckOff.bmp")
+//oCol:AddBmpFile("BITMAPS\xCheckOn.bmp")
+//  oCol:AddBmpFile("BITMAPS\xCheckOff.bmp")
+
+  oCol:AddBmpFile("BITMAPS\checkverde.bmp")
+  oCol:AddBmpFile("BITMAPS\checkrojo.bmp")
   oCol:bBmpData    := {|oObj,oBrw|oBrw:=oTrabVac:oBrw,IIF(oBrw:aArrayData[oBrw:nArrayAt,10],1,2) }
   oCol:nDataStyle  := oCol:DefStyle( AL_LEFT, .F.)
   oCol:bStrData    := { ||""}
 
-  oBrw:bClrHeader:= {|| {0,14671839 }}
-  oBrw:bClrFooter:= {|| {0,14671839 }}
+//oBrw:bClrHeader:= {|| {0,14671839 }}
+//oBrw:bClrFooter:= {|| {0,14671839 }}
 
   oBrw:bClrStd   :={|oBrw,cCod,nClrText|oBrw:=oTrabVac:oBrw,cCod:=oBrw:aArrayData[oBrw:nArrayAt,1],;
                                cCod:=Left(cCod,1),;
                                nClrText:=0,;
                                nClrText:=IIF(cCod="A",CLR_HBLUE,nClrText),;
                                nClrText:=IIF(cCod="D",CLR_HRED ,nClrText),;
-                               {nClrText, iif( oBrw:nArrayAt%2=0, 15790320, 16382457 ) } }
+                               {nClrText, iif( oBrw:nArrayAt%2=0, oTrabVac:nClrPane1, oTrabVac:nClrPane2 ) } }
   oBrw:bLDblClick:={|oBrw,cCodCon|oBrw:=oTrabVac:oBrw,cCodCon:=oBrw:aArrayData[oBrw:nArrayAt,1],;
                      EJECUTAR("NMRECVIEW",oBrw:aArrayData[oBrw:nArrayAt,09])}
 
   oBrw:SetFont(oFont)
 
+  oBrw:bClrHeader:= {|| { oDp:nLbxClrHeaderText, oDp:nLbxClrHeaderPane}}
+  oBrw:bClrFooter:= {|| { oDp:nLbxClrHeaderText, oDp:nLbxClrHeaderPane}}
+
+
   oTrabVac:oBrw:=oBrw
+
+  oBrw:CreateFromCode()
+
+  oTrabVac:oWnd:oClient := oBrw
+
   oTrabVac:Activate({||oTrabVac:LeyBar(oTrabVac)})
 
   DpFocus(oBrw)
@@ -124,7 +154,7 @@ RETURN uValue
 // Coloca la Barra de Botones
 */
 FUNCTION LEYBAR(oTrabVac)
-   LOCAL oCursor,oBar,oBtn,oFont,oCol,nDif
+   LOCAL oCursor,oBar,oBtn,oFont,oFontB,oCol,nDif
    LOCAL nWidth :=0 // Ancho Calculado seg£n Columnas
    LOCAL nHeight:=0 // Alto
    LOCAL nLines :=0 // Lineas
@@ -132,6 +162,9 @@ FUNCTION LEYBAR(oTrabVac)
    
    DEFINE CURSOR oCursor HAND
    DEFINE BUTTONBAR oBar SIZE 52-15,60-15 OF oDlg 3D CURSOR oCursor
+
+   DEFINE FONT oFont  NAME "Tahoma"   SIZE 0, -12 
+   DEFINE FONT oFontB NAME "Tahoma"   SIZE 0, -12 BOLD
 
    DEFINE BUTTON oBtn;
           OF oBar;
@@ -197,12 +230,12 @@ FUNCTION LEYBAR(oTrabVac)
           FILENAME "BITMAPS\XSALIR.BMP";
           ACTION oTrabVac:Close()
 
-  oTrabVac:oBrw:SetColor(0,15790320)
+  oTrabVac:oBrw:SetColor(0,oTrabVac:nClrPane1)
 
-  @ 0.1,60 SAY oTrabVac:cTrabajad OF oBar BORDER SIZE 345,18
+  oBar:SetColor(CLR_BLACK,oDp:nGris)
+  AEVAL(oBar:aControls,{|o,n|o:SetColor(CLR_BLACK,oDp:nGris)})
 
-  oBar:SetColor(CLR_BLACK,15724527)
-  AEVAL(oBar:aControls,{|o,n|o:SetColor(CLR_BLACK,15724527)})
+  @ 0.1,60 SAY oTrabVac:cTrabajad OF oBar BORDER SIZE 345,18 COLOR oDp:nClrYellowText,oDp:nClrYellow FONT oFontB
 
 RETURN .T.
 

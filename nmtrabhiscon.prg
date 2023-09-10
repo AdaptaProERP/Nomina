@@ -13,7 +13,7 @@ PROCE MAIN(cCodTra,nAno,nMes,cWhereC)
   LOCAL cSql,cPictureV,cPictureM,cNombre:="",nMonto:=0,cInner:=""
   LOCAL cFecha  :=HISFECHA()
 
-  DEFAULT cCodTra:="1002",;
+  DEFAULT cCodTra:=SQLGET("NMRECIBOS","REC_CODTRA"),;
           cWhereC:=""
 
   CursorWait()

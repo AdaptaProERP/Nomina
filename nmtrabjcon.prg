@@ -117,35 +117,36 @@ PROCE MAIN(oForm,cCodTra)
     oFrmCon:cAntigued:=STRTRAN(oFrmCon:cAntigued,"d",IIF(nDias >1,"Días " ,"Días "))
 
     @ 0,30 SAY "Código:"     
-    @ 2,30 SAY oFrmCon:cNombre BORDER
+    @ 2,30 SAY oFrmCon:cNombre 
 
     @ 3,30 SAY "Apellidos y Nombre:" 
-    @ 4,30 SAY oFrmCon:CODIGO BORDER
+    @ 4,30 SAY oFrmCon:CODIGO 
 
     @ 5,30 SAY "Periodo de Vacaciones:" 
-    @ 6,30 SAY CFECHA(oFrmCon:FECHA_VAC) BORDER
-    @ 6,30 SAY CFECHA(oFrmCon:FECHA_FIN) BORDER
+    @ 6,30 SAY CFECHA(oFrmCon:FECHA_VAC) 
+    @ 6,30 SAY CFECHA(oFrmCon:FECHA_FIN) 
 
     @ 7,30 SAY "Periodo laborado : "
-    @ 8,30 SAY CFECHA(oFrmCon:FECHA_ING) BORDER
-    @ 8,50 SAY CFECHA(oFrmCon:FECHA_EGR) BORDER
-    @ 9,50 SAY oFrmCon:cAntigued BORDER
+    @ 8,30 SAY " "+CFECHA(oFrmCon:FECHA_ING) 
+    @ 8,50 SAY " "+CFECHA(oFrmCon:FECHA_EGR) 
+    @ 9,50 SAY oFrmCon:cAntigued 
 
+/*
     @6, 16 SBUTTON oFrmCon:oBtn ;
            SIZE 50, 50 ;
            FILE "BITMAPS\XSALIR.BMP" ;
            LEFT PROMPT "Cerrar" NOBORDER;
            COLORS CLR_BLACK, { CLR_WHITE, CLR_HGRAY, 3 };
            ACTION (oFrmCon:Close())
-
+*/
     @ 5,20 BITMAP oFrmCon:oImage FILENAME oFrmCon:FILEBMP;
                  SIZE 159,199 ADJUST 
 
    @ 09,30 SAY "Preaviso Art 107 (Renuncia):"
-   @ 10,30 SAY LSTR(oFrmCon:nDiasP)+" Días" BORDER
+   @ 10,30 SAY LSTR(oFrmCon:nDiasP)+" Días" 
 
    @ 10,30 SAY "Preaviso Art 104 (Despido):"
-   @ 11,30 SAY LSTR(oFrmCon:nDias104)+" Días" BORDER
+   @ 11,30 SAY LSTR(oFrmCon:nDias104)+" Días" 
 
 
 //    @ 10,30 SAY BORDER
@@ -391,7 +392,8 @@ EJECUTAR("NMPRESTVIEW",;
            PROMPT "Digitalización";
            NOBORDER;
            COLORS CLR_BLACK, { CLR_WHITE, CLR_HGRAY, 1 };
-           ACTION EJECUTAR("DPFILEEMPMAIN",oFrmCon:nFilMai,oFrmCon:CODIGO,NIL,NIL,.T.)
+           ACTION (oFrmCon:nFilMai:=EJECUTAR("DPFILEEMPMAIN",oFrmCon:nFilMai,oFrmCon:CODIGO,NIL,NIL,.T.),;
+                   SQLUPDATE("NMTRABAJADOR","TRA_FILMAI",oFrmCon:nFilMai,"CODIGO"+GetWhere("=",oFrmCon:CODIGO)))
 
    oBtn:cToolTip:="Ver Archivos Adjuntos"
    oBtn:cMsg    :=oBtn:cToolTip
@@ -421,8 +423,32 @@ EJECUTAR("NMPRESTVIEW",;
 
 */
 
-   oFrmCon:Activate()
+   oFrmCon:Activate({||oFrmCon:ViewDatBar()})
   
+RETURN .T.
+
+/*
+// Barra de Botones
+*/
+FUNCTION ViewDatBar()
+   LOCAL oCursor,oBar,oBtn,oFont
+   LOCAL oDlg:=oFrmCon:oDlg
+
+   DEFINE CURSOR oCursor HAND
+   DEFINE BUTTONBAR oBar SIZE 52-15,60-15 OF oDlg 3D CURSOR oCursor
+
+
+   DEFINE BUTTON oBtn;
+          OF oBar;
+          NOBORDER;
+          FONT oFont;
+          FILENAME "BITMAPS\XSALIR.BMP";
+          ACTION (oFrmCon:Close())
+
+   oBtn:cToolTip:="Salir"
+   oBar:SetColor(CLR_BLACK,oDp:nGris)
+   AEVAL(oBar:aControls,{|o,n|o:SetColor(CLR_BLACK,oDp:nGris)})
+
 RETURN .T.
 
 FUNCTION REGAUDITORIA(cConsulta)
